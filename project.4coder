@@ -1,0 +1,61 @@
+version (1);
+
+project_name = "PapayaOS";
+
+patterns = {
+	"*.c",
+	"*.h",
+	"*.asm",
+	"*.S",
+	"*.bat",
+	"*.sh",
+	"*.4coder",
+};
+
+blacklist_patterns = {
+	".*",
+};
+
+load_paths = {
+	{
+		{ {"."}, .recursive = true, .relative = true }, .os = "win"
+	},
+};
+
+command_list = {
+	
+	{
+		.name = "build_run",
+		.out = "*compilation*",
+		.footer_panel = true,
+		.save_dirty_files = true,
+		.cursor_at_end = false,
+		.cmd = {
+			{ "build_run.bat", .os = "win" },
+		},
+	},
+	{
+		.name = "build_asm",
+		.out = "*building bin*",
+		.footer_panel = true,
+		.save_dirty_files = true,
+		.cursor_at_end = false,
+		.cmd = {
+			{ "build_asm.bat", .os = "win" },
+		},
+	},
+	{
+		.name = "qemu_run",
+		.out = "*running qemu*",
+		.footer_panel = true,
+		.save_dirty_files = true,
+		.cursor_at_end = false,
+		.cmd = {
+			{ "qemu_run.bat", .os = "win" },
+		},
+	},
+};
+
+fkey_command[1] = "build_run";
+fkey_command[2] = "build_asm";
+fkey_command[3] = "qemu_run";
