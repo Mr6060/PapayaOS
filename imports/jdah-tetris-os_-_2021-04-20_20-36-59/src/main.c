@@ -1,23 +1,24 @@
-#include "util.h"
-#include "screen.h"
-#include "idt.h"
-#include "isr.h"
-#include "irq.h"
-#include "timer.h"
-#include "font.h"
-#include "system.h"
-#include "keyboard.h"
-#include "speaker.h"
-#include "fpu.h"
-#include "sound.h"
-#include "music.h"
-
+//#include "util.h"
+//#include "screen.h"
+//#include "idt.h"
+//#include "isr.h"
+//#include "irq.h"
+//#include "timer.h"
+//#include "font.h"
+//#include "system.h"
+//#include "keyboard.h"
+//#include "speaker.h"
+//#include "fpu.h"
+//#include "sound.h"
+//#include "music.h"
+/*
 #define FPS 30
 #define LEVELS 30
 
 #define TILE_SIZE 10
 
 #define LOGO_HEIGHT 5
+*/
 static const char *LOGO[LOGO_HEIGHT] = {
     "AAA BBB CCC DD  EEE FFF",
     " A  B    C  D D  E  F  ",
@@ -76,23 +77,23 @@ u8 TILE_SPRITES[NUM_TILES][TILE_SIZE * TILE_SIZE] = { 0 };
 #define TTM_BLOCK(_t, _i, _j) (((_t) & (1 << (((_j) * 4) + (_i)))) != 0)
 
 #define TTM_OFFSET_X(_t)\
-    MIN(_t & 0x000F ? LOBIT((_t >> 0) & 0xF) : 3,\
-        MIN(_t & 0x00F0 ? LOBIT((_t >> 4) & 0xF) : 3,\
-            MIN(_t & 0x0F00 ? LOBIT((_t >> 8) & 0xF) : 3,\
-                _t & 0xF000 ? LOBIT((_t >> 12) & 0xF) : 3)))
+MIN(_t & 0x000F ? LOBIT((_t >> 0) & 0xF) : 3,\
+MIN(_t & 0x00F0 ? LOBIT((_t >> 4) & 0xF) : 3,\
+MIN(_t & 0x0F00 ? LOBIT((_t >> 8) & 0xF) : 3,\
+_t & 0xF000 ? LOBIT((_t >> 12) & 0xF) : 3)))
 
 #define TTM_WIDTH(_t)\
-    1 + MAX(HIBIT((_t >> 0) & 0xF),\
-            MAX(HIBIT((_t >> 4) & 0xF),\
-                MAX(HIBIT((_t >> 8) & 0xF), HIBIT((_t >> 12) & 0xF)))) -\
-                    TTM_OFFSET_X(_t)
+1 + MAX(HIBIT((_t >> 0) & 0xF),\
+MAX(HIBIT((_t >> 4) & 0xF),\
+MAX(HIBIT((_t >> 8) & 0xF), HIBIT((_t >> 12) & 0xF)))) -\
+TTM_OFFSET_X(_t)
 
 #define TTM_HEIGHT(_t) ((HIBIT(_t) / 4) - (LOBIT(_t) / 4) + 1)
 #define TTM_OFFSET_Y(_t) (LOBIT(_t) / 4)
 
 #define TTM_FOREACH(_xname, _yname, _xxname, _yyname, _xbase, _ybase)\
-    for (i32 _yname = 0, _yyname = (_ybase); _yname < TTM_SIZE; _yname++,_yyname++)\
-        for (i32 _xname = 0, _xxname = (_xbase); _xname < TTM_SIZE; _xname++,_xxname++)\
+for (i32 _yname = 0, _yyname = (_ybase); _yname < TTM_SIZE; _yname++,_yyname++)\
+for (i32 _xname = 0, _xxname = (_xbase); _xname < TTM_SIZE; _xname++,_xxname++)\
 
 struct Tetromino {
     enum Tile color;
@@ -189,21 +190,21 @@ struct Control {
 
 static struct {
     u8 board[BOARD_HEIGHT][BOARD_WIDTH];
-
+    
     u32 frames, steps, frames_since_step;
     u32 score, lines, level;
     i32 lines_left;
     bool menu, pause, stopped, destroy, game_over, music;
-
+    
     const struct Tetromino *next;
-
+    
     struct {
         const struct Tetromino *ttm;
         u8 r;
         i32 x, y;
         bool done;
     } curr;
-
+    
     union {
         struct {
             struct Control rotate_left;
@@ -226,35 +227,35 @@ static void done() {
             state.board[yy][xx] |= TILE_FLAG_FLASH;
         }
     }
-
+    
     // check for lines
     u32 lines = 0;
-
+    
     for (size_t y = 0; y < BOARD_HEIGHT; y++) {
         bool line = true;
-
+        
         for (size_t x = 0; x < BOARD_WIDTH; x++) {
             if ((state.board[y][x] & TILE_MASK) == NONE) {
                 line = false;
                 break;
             }
         }
-
+        
         if (line) {
             lines++;
-
+            
             for (size_t x = 0; x < BOARD_WIDTH; x++) {
                 state.board[y][x] |= TILE_FLAG_FLASH | TILE_FLAG_DESTROY;
             }
-
+            
             state.destroy = true;
         }
     }
-
+    
     if (lines > 0) {
         state.lines += lines;
         state.score += LINE_MULTIPLIERS[lines - 1] * (state.level + 1);
-
+        
         // check for leveling up
         if (state.level != NUM_LEVELS - 1) {
             state.lines_left -= lines;
@@ -264,16 +265,16 @@ static void done() {
             }
         }
     }
-
+    
     // new tetromino is spawned in update() after destroy
     state.curr.done = true;
 }
 
 static bool try_modify(
-    const struct Tetromino *ttm, u16 tc, i32 xc, i32 yc, u16 tn, i32 xn, i32 yn) {
+                       const struct Tetromino *ttm, u16 tc, i32 xc, i32 yc, u16 tn, i32 xn, i32 yn) {
     u8 board[BOARD_HEIGHT][BOARD_WIDTH];
     memcpy(&board, &state.board, sizeof(board));
-
+    
     // clear current tiles
     if (tc != 0) {
         TTM_FOREACH(x, y, xx, yy, xc, yc) {
@@ -282,27 +283,27 @@ static bool try_modify(
             }
         }
     }
-
+    
     TTM_FOREACH(x, y, xx, yy, xn, yn) {
         if (yy < 0) {
             if (TTM_BLOCK(tn, x, y) &&
                 (xx < 0 || xx >= BOARD_WIDTH)) {
                 goto fail;
             }
-
+            
             continue;
         } else if (!TTM_BLOCK(tn, x, y)) {
             continue;
         } else if (!IN_BOARD(xx, yy) || state.board[yy][xx] != NONE ||
-            xx < 0 || xx > (BOARD_WIDTH - 1)) {
+                   xx < 0 || xx > (BOARD_WIDTH - 1)) {
             goto fail;
         }
-
+        
         state.board[yy][xx] = ttm->color;
     }
-
+    
     return true;
-fail:
+    fail:
     memcpy(&state.board, &board, sizeof(board));
     return false;
 }
@@ -311,53 +312,53 @@ static bool spawn() {
     if (state.next == NULL) {
         state.next = &TETROMINOS[rand() % NUM_TETROMINOS];
     }
-
+    
     state.curr.ttm = state.next;
     state.curr.r = 0;
     state.curr.x = (BOARD_WIDTH / 2) - 2;
     state.curr.y = -TTM_OFFSET_Y(state.curr.ttm->rotations[state.curr.r]) - 1;
     state.curr.done = false;
-
+    
     if (!try_modify(
-            state.curr.ttm,
-            0, 0, 0,
-            state.curr.ttm->rotations[state.curr.r],
-            state.curr.x, state.curr.y)) {
+                    state.curr.ttm,
+                    0, 0, 0,
+                    state.curr.ttm->rotations[state.curr.r],
+                    state.curr.x, state.curr.y)) {
         return false;
     }
-
+    
     state.next = &TETROMINOS[rand() % NUM_TETROMINOS];
     return true;
 }
 
 static bool move(i32 dx, i32 dy) {
     if (try_modify(
-            state.curr.ttm,
-            state.curr.ttm->rotations[state.curr.r],
-            state.curr.x, state.curr.y,
-            state.curr.ttm->rotations[state.curr.r],
-            state.curr.x + dx, state.curr.y + dy)) {
+                   state.curr.ttm,
+                   state.curr.ttm->rotations[state.curr.r],
+                   state.curr.x, state.curr.y,
+                   state.curr.ttm->rotations[state.curr.r],
+                   state.curr.x + dx, state.curr.y + dy)) {
         state.curr.x += dx;
         state.curr.y += dy;
         return true;
     }
-
+    
     return false;
 }
 
 static bool rotate(bool right) {
     u8 r = (state.curr.r + (right ? 1 : -1) + 4) % 4;
-
+    
     if (try_modify(
-            state.curr.ttm,
-            state.curr.ttm->rotations[state.curr.r],
-            state.curr.x, state.curr.y,
-            state.curr.ttm->rotations[r],
-            state.curr.x, state.curr.y)) {
+                   state.curr.ttm,
+                   state.curr.ttm->rotations[state.curr.r],
+                   state.curr.x, state.curr.y,
+                   state.curr.ttm->rotations[r],
+                   state.curr.x, state.curr.y)) {
         state.curr.r = r;
         return true;
     }
-
+    
     return false;
 }
 
@@ -366,20 +367,20 @@ static void generate_sprites() {
         if (t == NONE) {
             continue;
         }
-
+        
         u8 color = TILE_COLORS[t];
         u8 *pixels = TILE_SPRITES[t];
-
+        
         for (size_t y = 0; y < TILE_SIZE; y++) {
             for (size_t x = 0; x < TILE_SIZE; x++) {
                 u8 c = color;
-
+                
                 if (y == 0 || x == 0) {
                     c = COLOR_ADD(color, 1);
                 } else if (y == TILE_SIZE - 1 || x == TILE_SIZE - 1) {
                     c = COLOR_ADD(color, -1);
                 }
-
+                
                 pixels[y * TILE_SIZE + x] = c;
             }
         }
@@ -396,18 +397,18 @@ static void render_tile(enum Tile tile, size_t x, size_t y) {
 static void render_border() {
     for (size_t y = 0; y < (SCREEN_HEIGHT / TILE_SIZE); y++) {
         size_t yy = BOARD_Y + (y * TILE_SIZE);
-
+        
         render_tile(
-            BORDER,
-            BOARD_X - TILE_SIZE,
-            yy
-        );
-
+                    BORDER,
+                    BOARD_X - TILE_SIZE,
+                    yy
+                    );
+        
         render_tile(
-            BORDER,
-            BOARD_X + (BOARD_WIDTH * TILE_SIZE),
-            yy
-        );
+                    BORDER,
+                    BOARD_X + (BOARD_WIDTH * TILE_SIZE),
+                    yy
+                    );
     }
 }
 
@@ -416,10 +417,10 @@ static void render_board() {
         for (size_t x = 0; x < BOARD_WIDTH; x++) {
             u8 data = state.board[y][x];
             enum Tile tile = data & TILE_MASK;
-
+            
             size_t xs = BOARD_X + (x * TILE_SIZE),
-                   ys = BOARD_Y + (y * TILE_SIZE);
-
+            ys = BOARD_Y + (y * TILE_SIZE);
+            
             if (data & TILE_FLAG_FLASH) {
                 screen_fill(COLOR(4, 4, 1), xs, ys, TILE_SIZE, TILE_SIZE);
             } else if (tile != NONE) {
@@ -431,39 +432,39 @@ static void render_board() {
 
 static void render_ui() {
 #define X_OFFSET_RIGHT (BOARD_X + BOARD_WIDTH_PX + (TILE_SIZE * 2))
-
+    
 #define RENDER_STAT(_title, _value, _color, _x, _y, _w) do {\
-        char buf[32];\
-        itoa((_value), buf, 32);\
-        font_str_doubled((_title), (_x), (_y), COLOR(7, 7, 3));\
-        font_str_doubled(buf, (_x) + (_w) - font_width(buf), (_y) + TILE_SIZE, (_color));\
-    } while (0);
-
+char buf[32];\
+itoa((_value), buf, 32);\
+font_str_doubled((_title), (_x), (_y), COLOR(7, 7, 3));\
+font_str_doubled(buf, (_x) + (_w) - font_width(buf), (_y) + TILE_SIZE, (_color));\
+} while (0);
+    
     size_t w = font_width("SCORE");
     RENDER_STAT("SCORE", state.score, COLOR(5, 5, 0), X_OFFSET_RIGHT, TILE_SIZE * 1, w);
     RENDER_STAT("LINES", state.lines, COLOR(5, 3, 0), X_OFFSET_RIGHT, TILE_SIZE * 4, w);
     RENDER_STAT("LEVEL", state.level, COLOR(5, 0, 0), X_OFFSET_RIGHT, TILE_SIZE * 7, w);
-
+    
 #define X_OFFSET_LEFT (BOARD_X - (TILE_SIZE * 8))
 #define Y_OFFSET_LEFT TILE_SIZE
-
+    
     font_str_doubled("NEXT", X_OFFSET_LEFT, TILE_SIZE, COLOR(7, 7, 3));
-
+    
     for (size_t j = 0; j < TTM_SIZE; j++) {
         for (size_t i = 0; i < TTM_SIZE; i++) {
             u16 tiles = state.next->rotations[0];
-
+            
             if (TTM_BLOCK(tiles, i, j)) {
                 render_tile(
-                    state.next->color,
-                    X_OFFSET_LEFT + ((i - TTM_OFFSET_X(tiles)) * TILE_SIZE),
-                    Y_OFFSET_LEFT + (TILE_SIZE / 2) + ((j - TTM_OFFSET_Y(tiles) + 1) * TILE_SIZE)
-                );
+                            state.next->color,
+                            X_OFFSET_LEFT + ((i - TTM_OFFSET_X(tiles)) * TILE_SIZE),
+                            Y_OFFSET_LEFT + (TILE_SIZE / 2) + ((j - TTM_OFFSET_Y(tiles) + 1) * TILE_SIZE)
+                            );
             }
         }
     }
 }
-
+/*
 static void render_game_over() {
     const size_t w = SCREEN_WIDTH / 3, h = SCREEN_HEIGHT / 3;
     screen_fill(
@@ -511,12 +512,12 @@ static void render_game_over() {
 
 static void step() {
     bool stopped = !move(0, 1);
-
+    
     if (stopped && state.stopped) {
         // twice stop = end for this tetromino
         done();
     }
-
+    
     state.stopped = stopped;
 }
 
@@ -534,17 +535,17 @@ static void update() {
         if (keyboard_char('\n')) {
             reset(0);
         }
-
+        
         return;
     }
-
+    
     // un-flash flashing tiles, remove destroy tiles
     for (size_t y = 0; y < BOARD_HEIGHT; y++) {
         bool destroy = false;
-
+        
         for (size_t x = 0; x < BOARD_WIDTH; x++) {
             u8 data = state.board[y][x];
-
+            
             if (data & TILE_FLAG_DESTROY) {
                 state.board[y][x] = NONE;
                 destroy = true;
@@ -552,80 +553,79 @@ static void update() {
                 state.board[y][x] &= ~TILE_FLAG_FLASH;
             }
         }
-
+        
         if (destroy) {
             if (y != 0) {
                 memmove(
-                    &state.board[1],
-                    &state.board[0],
-                    sizeof(state.board[0]) * y
-                );
+                        &state.board[1],
+                        &state.board[0],
+                        sizeof(state.board[0]) * y
+                        );
             }
-
+            
             memset(&state.board[0], NONE, sizeof(state.board[0]));
         }
     }
-
+    
     // spawn a new tetromino if the current one is done
     if (state.curr.done && !spawn()) {
         state.game_over = true;
         return;
     }
-
+    
     if (state.destroy) {
         state.destroy = false;
         return;
     }
-
-    const bool control_states[NUM_CONTROLS] = {
-        keyboard_char('a'),
-        keyboard_char('d'),
-        keyboard_char('r'),
-        keyboard_key(KEY_LEFT),
-        keyboard_key(KEY_RIGHT),
-        keyboard_key(KEY_DOWN),
-        keyboard_char(' ')
-    };
-
-    for (size_t i = 0; i < NUM_CONTROLS; i++) {
-        struct Control *c = &state.controls.raw[i];
-        c->last = c->down;
-        c->down = control_states[i];
-        c->pressed = !c->last && c->down;
-
-        if (c->pressed) {
-            c->pressed_frames = state.frames;
-        }
+    */
+/*const bool control_states[NUM_CONTROLS] = {
+    keyboard_char('a'),
+    keyboard_char('d'),
+    keyboard_char('r'),
+    keyboard_key(KEY_LEFT),
+    keyboard_key(KEY_RIGHT),
+    keyboard_key(KEY_DOWN),
+    keyboard_char(' ')
+};
+for (size_t i = 0; i < NUM_CONTROLS; i++) {
+    struct Control *c = &state.controls.raw[i];
+    c->last = c->down;
+    c->down = control_states[i];
+    c->pressed = !c->last && c->down;
+    
+    if (c->pressed) {
+        c->pressed_frames = state.frames;
     }
+}
+*/
+if (state.controls.rotate_left.pressed) {
+    rotate(false);
+} else if (state.controls.rotate_right.pressed ||
+           state.controls.rotate.pressed) {
+    rotate(true);
+}
 
-    if (state.controls.rotate_left.pressed) {
-        rotate(false);
-    } else if (state.controls.rotate_right.pressed ||
-        state.controls.rotate.pressed) {
-        rotate(true);
-    }
-
-    if (state.controls.left.down &&
-        (state.frames - state.controls.left.pressed_frames) % 2 == 0) {
-        move(-1, 0);
-    } else if (state.controls.right.down &&
-         (state.frames - state.controls.right.pressed_frames) % 2 == 0) {
-        move(1, 0);
-    } else if (state.controls.down.down &&
-         (state.frames - state.controls.down.pressed_frames) % 2 == 0) {
-        if (!move(0, 1)) {
-            done();
-        }
-    } else if (state.controls.fast_down.pressed) {
-        while (move(0, 1));
+if (state.controls.left.down &&
+    (state.frames - state.controls.left.pressed_frames) % 2 == 0) {
+    move(-1, 0);
+} else if (state.controls.right.down &&
+           (state.frames - state.controls.right.pressed_frames) % 2 == 0) {
+    move(1, 0);
+} else if (state.controls.down.down &&
+           (state.frames - state.controls.down.pressed_frames) % 2 == 0) {
+    if (!move(0, 1)) {
         done();
     }
+} else if (state.controls.fast_down.pressed) {
+    while (move(0, 1));
+    done();
+}
 
-    if (--state.frames_since_step == 0) {
-        step();
-        state.steps++;
-        state.frames_since_step = FRAMES_PER_STEP[state.level];
-    }
+if (--state.frames_since_step == 0) {
+    step();
+    state.steps++;
+    state.frames_since_step = FRAMES_PER_STEP[state.level];
+}
 }
 
 static void render() {
@@ -633,7 +633,7 @@ static void render() {
     render_border();
     render_board();
     render_ui();
-
+    
     if (state.game_over) {
         render_game_over();
     }
@@ -648,42 +648,42 @@ void update_menu() {
 
 void render_menu() {
     screen_clear(COLOR(0, 0, 0));
-
+    
     // render logo
     size_t logo_width = strlen(LOGO[0]),
-           logo_x = (SCREEN_WIDTH - (logo_width * TILE_SIZE)) / 2,
-           logo_y = TILE_SIZE * 3;
-
+    logo_x = (SCREEN_WIDTH - (logo_width * TILE_SIZE)) / 2,
+    logo_y = TILE_SIZE * 3;
+    
     for (i32 x = -1; x < (i32) logo_width + 1; x++) {
         render_tile(BORDER, logo_x + (x * TILE_SIZE), logo_y - (TILE_SIZE * 2));
         render_tile(BORDER, logo_x + (x * TILE_SIZE), logo_y + (TILE_SIZE * (1 + LOGO_HEIGHT)));
     }
-
+    
     for (size_t y = 0; y < LOGO_HEIGHT; y++) {
         for (size_t x = 0; x < logo_width; x++) {
             char c = LOGO[y][x];
-
+            
             if (c == ' ' || c == '\t' || c == '\n') {
                 continue;
             }
-
+            
             render_tile(
-                GREEN + ((((state.frames / 10) + (6 - (c - 'A'))) / 6) % 8),
-                logo_x + (x * TILE_SIZE),
-                logo_y + (y * TILE_SIZE)
-            );
+                        GREEN + ((((state.frames / 10) + (6 - (c - 'A'))) / 6) % 8),
+                        logo_x + (x * TILE_SIZE),
+                        logo_y + (y * TILE_SIZE)
+                        );
         }
     }
-
+    
     const char *play = "PRESS ENTER TO PLAY";
     font_str_doubled(
-        play,
-        (SCREEN_WIDTH - font_width(play)) / 2,
-        logo_y + ((LOGO_HEIGHT + 6) * TILE_SIZE),
-        (state.frames / 6) % 2 == 0 ?
-            COLOR(6, 6, 2) :
-            COLOR(7, 7, 3)
-    );
+                     play,
+                     (SCREEN_WIDTH - font_width(play)) / 2,
+                     logo_y + ((LOGO_HEIGHT + 6) * TILE_SIZE),
+                     (state.frames / 6) % 2 == 0 ?
+                     COLOR(6, 6, 2) :
+                     COLOR(7, 7, 3)
+                     );
 }
 
 void _main(u32 magic) {
@@ -697,26 +697,26 @@ void _main(u32 magic) {
     sound_init();
     generate_sprites();
     music_init();
-
+    
     state.menu = true;
-
+    
     state.music = true;
     sound_master(255);
-
+    
     bool last_music_toggle = false;
     u32 last_frame = 0, last = 0;
-
+    
     while (true) {
         const u32 now = (u32) timer_get();
-
+        
         if (now != last) {
             music_tick();
             last = now;
         }
-
+        
         if ((now - last_frame) > (TIMER_TPS / FPS)) {
             last_frame = now;
-
+            
             if (state.menu) {
                 update_menu();
                 render_menu();
@@ -724,18 +724,18 @@ void _main(u32 magic) {
                 update();
                 render();
             }
-
+            
             if (keyboard_char('m')) {
                 if (!last_music_toggle) {
                     state.music = !state.music;
                     sound_master(state.music ? 255 : 0);
                 }
-
+                
                 last_music_toggle = true;
             } else {
                 last_music_toggle = false;
             }
-
+            
             screen_swap();
             state.frames++;
         }

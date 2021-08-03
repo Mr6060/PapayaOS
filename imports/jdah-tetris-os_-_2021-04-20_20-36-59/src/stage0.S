@@ -69,7 +69,7 @@ sector_same_segment:
     inb $0x60
 
     /* write new state with A20 bit set (0x2) */
-    pushw %ax
+    pushw %.ax
     call enable_a20_wait0
     movb $0xD1, %al
     outb $0x64
@@ -201,3 +201,4 @@ idt:
 /* MBR BOOT SIGNATURE */
 .fill 510-(.-_start), 1, 0
 .word 0xAA55
+						
